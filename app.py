@@ -5,6 +5,9 @@ import re # 정규식
 
 app = Flask(__name__, static_url_path="/static") 
 
+DATABASE = '/Database/prom.db'
+
+
 # 콤마처리 공통함수 
 def comma_machine(n):    
     strN = str(n) #문자화
@@ -27,9 +30,10 @@ def bootstrap():
     return render_template('index.html', res=res) # 예제 템플릿
 
 
+
 @app.route('/promanaly')
 def hello():
-    db = sqlite3.connect(r"D:\python project\app1 bootstrap\Database\prom.db") 
+    db = sqlite3.connect(DATABASE) 
     cursor = db.cursor()
     sql_read = "SELECT SUM(APL_AMT), SUM(SELLPRC), (SUM(SELLPRC)-SUM(APL_AMT))*100/SUM(APL_AMT)   FROM OFFER_APL_HIST"
     res = cursor.execute(sql_read).fetchall()
