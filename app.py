@@ -5,7 +5,7 @@ import re # 정규식
 
 app = Flask(__name__, static_url_path="/static") 
 
-DATABASE = '/Database/prom.db'
+DATABASE = './Database/prom.db'
 
 
 # 콤마처리 공통함수 
