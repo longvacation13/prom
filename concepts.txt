@@ -1,2 +1,4 @@
 concepts 
 가격탄력정보 
+
+메인화면의 Illustrations에 sklearn 혹은 pandas 관련 데이터 그래프가 있으면 좋을것으로 보임. - 괜찮은 그래프는 고민 필요 
