@@ -18,8 +18,7 @@
         rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="{{url_for('static',filename='css/sb-admin-2.min.css')}}">
-
+    <link rel="stylesheet" href="{{url_for('static',filename='css/sb-admin-2.min.css')}}">    
 </head>
 
 <body id="page-top">
@@ -169,9 +168,9 @@
                     <!-- Topbar Search -->
                     <form
                         class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search"
-                        action="/promanaly">
+                        action="/promanaly" method="POST">                        
                         <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="프로모션ID.."
+                            <input type="text" name="promid" class="form-control bg-light border-0 small" placeholder="프로모션ID.."
                                 aria-label="Search" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button" onclick="submit();">
@@ -426,8 +425,8 @@
                                                 </div>
                                                 <div class="col">
                                                     <div class="progress progress-sm mr-2">
-                                                        <div class="progress-bar bg-info" role="progressbar"
-                                                            style="width: 50%" aria-valuenow="{{ res[2] }}" aria-valuemin="0"
+                                                        <div class="progress-bar bg-info" role="progressbar" id="progbar"
+                                                            style="width: 0%" aria-valuenow="{{ res[2] }}" aria-valuemin="0"
                                                             aria-valuemax="100"></div>
                                                     </div>
                                                 </div>
@@ -449,12 +448,12 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                                 재구매율</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">20%</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">0%</div>
                                         </div>
                                         <div class="col">
                                             <div class="progress progress-sm mr-2">
                                                 <div class="progress-bar bg-info" role="progressbar"
-                                                    style="width: 50%" aria-valuenow="20" aria-valuemin="0"
+                                                    style="width: 0%" aria-valuenow="20" aria-valuemin="0"
                                                     aria-valuemax="100"></div>
                                             </div>
                                         </div>
@@ -469,7 +468,7 @@
                     <div class="row">
 
                         <!-- Area Chart -->
-                        <div class="col-xl-8 col-lg-7">
+                        <div class="col-lg-6 mb-4">
                             <div class="card shadow mb-4">
                                 <!-- Card Header - Dropdown -->
                                 <div
@@ -500,12 +499,12 @@
                         </div>
 
                         <!-- Pie Chart -->
-                        <div class="col-xl-4 col-lg-5">
+                        <div class="col-lg-6 mb-4">
                             <div class="card shadow mb-4">
                                 <!-- Card Header - Dropdown -->
                                 <div
                                     class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Revenue Sources</h6>
+                                    <h6 class="m-0 font-weight-bold text-primary">프로모션리스트</h6>
                                     <div class="dropdown no-arrow">
                                         <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
                                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -523,10 +522,44 @@
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
-                                    <div class="chart-pie pt-4 pb-2">
-                                        <canvas id="myPieChart"></canvas>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                            <thead>
+                                                <tr>
+                                                    <th>프로모션ID</th>
+                                                    <th>프로모션명</th>
+                                                    <th>오퍼종류</th>
+                                                    <th>프로모션기간</th>
+                                                    <th>할인금액/율</th>
+                                                    <th>프로모션진행상태</th>
+                                                </tr>
+                                            </thead>
+                                            <tfoot>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Position</th>
+                                                    <th>Office</th>
+                                                    <th>Age</th>
+                                                    <th>Start date</th>
+                                                    <th>Salary</th>
+                                                </tr>
+                                            </tfoot>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Tiger Nixon</td>
+                                                    <td>System Architect</td>
+                                                    <td>Edinburgh</td>
+                                                    <td>61</td>
+                                                    <td>2011/04/25</td>
+                                                    <td>$320,800</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                    <div class="mt-4 text-center small">
+                                    <!-- <div class="chart-pie pt-4 pb-2">
+                                        <canvas id="myPieChart"></canvas>
+                                    </div> -->
+                                    <!-- <div class="mt-4 text-center small">
                                         <span class="mr-2">
                                             <i class="fas fa-circle text-primary"></i> Direct
                                         </span>
@@ -536,7 +569,7 @@
                                         <span class="mr-2">
                                             <i class="fas fa-circle text-info"></i> Referral
                                         </span>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                         </div>
@@ -757,7 +790,116 @@
 
     <!-- Page level custom scripts -->
     <script src="static/js/demo/chart-area-demo.js"></script>
-    <script src="static/js/demo/chart-pie-demo.js"></script>
+    <script src="static/js/demo/chart-pie-demo.js"></script>    
+    <script type="text/javascript">        
+    $(document).ready(function () {                   
+        
+        // 1. ROI progressbar handling 
+        var datajson = {{data|tojson}};      
+        document.getElementById("progbar").style.width=datajson.roi_rate+"%";            
+        //myLineChart.data.datasets[0]['data'] = [1,2,3,4,5,6];                                     
+        // 2. line chart handling          
+        var datajson = {{res_cnt|tojson}};                  
+        show_chart(datajson)        
+    });
+    
+    function show_chart(datajson)
+    {           
+        // Area Chart Example
+        var ctx = document.getElementById("myAreaChart");
+        var myLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6"],
+            datasets: [{
+            label: "Earnings",
+            lineTension: 0.3,
+            backgroundColor: "rgba(78, 115, 223, 0.05)",
+            borderColor: "rgba(78, 115, 223, 1)",
+            pointRadius: 3,
+            pointBackgroundColor: "rgba(78, 115, 223, 1)",
+            pointBorderColor: "rgba(78, 115, 223, 1)",
+            pointHoverRadius: 3,
+            pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+            pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+            pointHitRadius: 10,
+            pointBorderWidth: 2,
+            data: [datajson[0]['apl_cnt'], datajson[1]['apl_cnt'], datajson[2]['apl_cnt'], datajson[3]['apl_cnt'], datajson[4]['apl_cnt']],
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: {
+            padding: {
+                left: 10,
+                right: 25,
+                top: 25,
+                bottom: 0
+            }
+            },
+            scales: {
+            xAxes: [{
+                time: {
+                unit: 'date'
+                },
+                gridLines: {
+                display: false,
+                drawBorder: false
+                },
+                ticks: {
+                maxTicksLimit: 7
+                }
+            }],
+            yAxes: [{
+                ticks: {
+                maxTicksLimit: 5,
+                padding: 10,
+                // Include a dollar sign in the ticks
+                callback: function(value, index, values) {
+                    return number_format(value) + '건';
+                }
+                },
+                gridLines: {
+                color: "rgb(234, 236, 244)",
+                zeroLineColor: "rgb(234, 236, 244)",
+                drawBorder: false,
+                borderDash: [2],
+                zeroLineBorderDash: [2]
+                }
+            }],
+            },
+            legend: {
+            display: false
+            },
+            tooltips: {
+            backgroundColor: "rgb(255,255,255)",
+            bodyFontColor: "#858796",
+            titleMarginBottom: 10,
+            titleFontColor: '#6e707e',
+            titleFontSize: 14,
+            borderColor: '#dddfeb',
+            borderWidth: 1,
+            xPadding: 15,
+            yPadding: 15,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            caretPadding: 10,
+            callbacks: {
+                label: function(tooltipItem, chart) {
+                var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
+                return datasetLabel + number_format(tooltipItem.yLabel);
+                }
+            }
+            }
+        }
+        });
+    }
+        
+        
+    </script>    
+    
+
 
 </body>
 

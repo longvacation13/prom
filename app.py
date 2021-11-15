@@ -1,7 +1,12 @@
+from types import MethodDescriptorType
 from flask import Flask, render_template
 import sqlite3 
 from sqlite3.dbapi2 import Cursor
-import re # 정규식
+import re
+from flask import request  # request 처리 
+
+
+from flask.wrappers import Request # 정규식
 
 app = Flask(__name__, static_url_path="/static") 
 
@@ -27,25 +32,50 @@ def comma_machine(n):
 @app.route('/') # 접속할 URL 
 def bootstrap():
     res = [0, 0, 0, 0]
-    return render_template('index.html', res=res) # 예제 템플릿
+    data = {'roi_rate': 0 }        
+    #res_cnt default setting
+    res_apl_cnt_list = [] 
+    for i in range(0, 6):
+        res_apl_cnt_list.append({'apl_cnt' : 0})
+
+    return render_template('index.html', res=res, res_cnt=res_apl_cnt_list, data=data) # 예제 템플릿
 
 
 
-@app.route('/promanaly')
-def hello():
+@app.route('/promanaly', methods=['GET', 'POST']) # 접속할 URL
+def promanaly():                
+    # parameter get 
+    PROM_ID = request.form['promid']
+
+    #db 연결
     db = sqlite3.connect(DATABASE) 
     cursor = db.cursor()
-    sql_read = "SELECT SUM(APL_AMT), SUM(SELLPRC), (SUM(SELLPRC)-SUM(APL_AMT))*100/SUM(APL_AMT)   FROM OFFER_APL_HIST"
-    res = cursor.execute(sql_read).fetchall()
+
+    ######################## SQL1. 대시보드 데이터 read ########################
+    sql_read_dashboard = "SELECT IFNULL(SUM(APL_AMT),0), IFNULL(SUM(SELLPRC),0), IFNULL((SUM(SELLPRC)-SUM(APL_AMT))*100/SUM(APL_AMT),0)   FROM OFFER_APL_HIST WHERE PROM_ID = ?"
+
+    res = cursor.execute(sql_read_dashboard, (PROM_ID,)).fetchall()
     res_list = list()
-        
-    for i in range(len(res[0])):        
-        print(comma_machine(res[0][i]))
-        # res[0][i] = comma_machine(res[0][i]).value
-        res_list.append(comma_machine(res[0][i]))
-        # print(comma_machine(re.sub(r'[^0-9]', '', res[0][i])))
-                       
-    return render_template('index.html', res=res_list); 
+
+    # 원단위 처리     
+    for i in range(len(res[0])):            
+        res_list.append(comma_machine(res[0][i]))                
+    
+    #################### SQL2. Earnings Overview data read ####################
+    sql_read_dashboard = "SELECT APL_CNT  FROM OFFER_APL_HIST WHERE PROM_ID = ? ORDER BY APL_DTS"
+    res_apl_cnt = cursor.execute(sql_read_dashboard, (PROM_ID,)).fetchall()
+
+    res_apl_cnt_list = [] 
+    for i in range(len(res_apl_cnt)):
+        print(res_apl_cnt[i][0])
+        res_apl_cnt_list.append({"apl_cnt" : res_apl_cnt[i][0]})
+
+    # ROI javascript ( TODO : 재구매율 필요 )
+    data = {  'roi_rate': res[0][2]  }                    
+
+    # return render_template('index.html', res=res_list, ); 
+    # data : roi rate progress bar 
+    return render_template('index.html', res=res_list, res_cnt=res_apl_cnt_list, data=data); 
 
 
 if __name__ == '__main__':
