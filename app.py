@@ -29,6 +29,7 @@ def comma_machine(n):
     return a.join(str_list).strip(',')
 
 
+
 @app.route('/') # 접속할 URL 
 def bootstrap():
     res = [0, 0, 0, 0]
@@ -37,8 +38,15 @@ def bootstrap():
     res_apl_cnt_list = [] 
     for i in range(0, 6):
         res_apl_cnt_list.append({'apl_cnt' : 0})
+        
+        
+    # 프로모션 정보 확인 
+    db = sqlite3.connect(DATABASE) 
+    cursor = db.cursor()    
+    sql_read_prom_info = "SELECT PROM_ID, PROM_NM, OFFER_ID, OFFER_KIND_CD, PRVD_PRFT_TYPE_CD, PRVD_PRFT_VAL FROM PROM_HIST ORDER BY PROM_ID DESC"
+    res_prom_info = cursor.execute(sql_read_prom_info).fetchall()        
 
-    return render_template('index.html', res=res, res_cnt=res_apl_cnt_list, data=data) # 예제 템플릿
+    return render_template('index.html', res=res, res_cnt=res_apl_cnt_list,res_prom_info=res_prom_info, data=data) # 예제 템플릿
 
 
 
