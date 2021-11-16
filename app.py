@@ -43,26 +43,28 @@ def bootstrap():
     # 프로모션 정보 확인 
     db = sqlite3.connect(DATABASE) 
     cursor = db.cursor()    
-    sql_read_prom_info = "SELECT PROM_ID, PROM_NM, OFFER_ID, OFFER_KIND_CD, PRVD_PRFT_TYPE_CD, PRVD_PRFT_VAL FROM PROM_HIST ORDER BY PROM_ID DESC"
+    current_page = 2
+    pagesize = 3
+    sql_read_prom_info = "SELECT PROM_ID, PROM_NM, OFFER_ID, OFFER_KIND_CD, PRVD_PRFT_TYPE_CD, PRVD_PRFT_VAL FROM PROM_HIST ORDER BY OFFER_ID DESC LIMIT "+str(pagesize)+" OFFSET "+str((current_page-1)*pagesize)
     res_prom_info = cursor.execute(sql_read_prom_info).fetchall()        
 
-    return render_template('index.html', res=res, res_cnt=res_apl_cnt_list,res_prom_info=res_prom_info, data=data) # 예제 템플릿
+    return render_template('index.html', res=res, res_cnt=res_apl_cnt_list, res_prom_info=res_prom_info, data=data) # 예제 템플릿
 
 
 
 @app.route('/promanaly', methods=['GET', 'POST']) # 접속할 URL
 def promanaly():                
     # parameter get 
-    PROM_ID = request.form['promid']
+    OFFER_ID = request.form['offerid']
 
     #db 연결
     db = sqlite3.connect(DATABASE) 
     cursor = db.cursor()
 
     ######################## SQL1. 대시보드 데이터 read ########################
-    sql_read_dashboard = "SELECT IFNULL(SUM(APL_AMT),0), IFNULL(SUM(SELLPRC),0), IFNULL((SUM(SELLPRC)-SUM(APL_AMT))*100/SUM(APL_AMT),0)   FROM OFFER_APL_HIST WHERE PROM_ID = ?"
+    sql_read_dashboard = "SELECT IFNULL(SUM(APL_AMT),0), IFNULL(SUM(SELLPRC),0), IFNULL((SUM(SELLPRC)-SUM(APL_AMT))*100/SUM(APL_AMT),0)   FROM OFFER_APL_HIST WHERE OFFER_ID = ?"
 
-    res = cursor.execute(sql_read_dashboard, (PROM_ID,)).fetchall()
+    res = cursor.execute(sql_read_dashboard, (OFFER_ID,)).fetchall()
     res_list = list()
 
     # 원단위 처리     
@@ -70,20 +72,25 @@ def promanaly():
         res_list.append(comma_machine(res[0][i]))                
     
     #################### SQL2. Earnings Overview data read ####################
-    sql_read_dashboard = "SELECT APL_CNT  FROM OFFER_APL_HIST WHERE PROM_ID = ? ORDER BY APL_DTS"
-    res_apl_cnt = cursor.execute(sql_read_dashboard, (PROM_ID,)).fetchall()
+    sql_read_dashboard = "SELECT APL_CNT  FROM OFFER_APL_HIST WHERE OFFER_ID = ? ORDER BY APL_DTS"
+    res_apl_cnt = cursor.execute(sql_read_dashboard, (OFFER_ID,)).fetchall()
 
     res_apl_cnt_list = [] 
     for i in range(len(res_apl_cnt)):
         print(res_apl_cnt[i][0])
         res_apl_cnt_list.append({"apl_cnt" : res_apl_cnt[i][0]})
 
+    #################### SQL3. DataTables ####################
+    sql_read_prom_info = "SELECT PROM_ID, PROM_NM, OFFER_ID, OFFER_KIND_CD, PRVD_PRFT_TYPE_CD, PRVD_PRFT_VAL FROM PROM_HIST WHERE 1=1 AND OFFER_ID = "+ OFFER_ID
+    res_prom_info = cursor.execute(sql_read_prom_info).fetchall()        
+
+
     # ROI javascript ( TODO : 재구매율 필요 )
     data = {  'roi_rate': res[0][2]  }                    
 
     # return render_template('index.html', res=res_list, ); 
     # data : roi rate progress bar 
-    return render_template('index.html', res=res_list, res_cnt=res_apl_cnt_list, data=data); 
+    return render_template('index.html', res=res_list, res_cnt=res_apl_cnt_list, res_prom_info=res_prom_info, data=data); 
 
 
 if __name__ == '__main__':
